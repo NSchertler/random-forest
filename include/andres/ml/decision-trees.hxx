@@ -439,7 +439,7 @@ DecisionNode<FEATURE, LABEL>::learn(
     numbersOfLabels[0].reserve(10); // expensive!
     numbersOfLabels[1].reserve(10); // expensive!
     double optimalSumOfGiniCoefficients = std::numeric_limits<double>::infinity();
-    size_t optimalFeatureIndex;
+    size_t optimalFeatureIndex = (size_t)-1;
     size_t optimalThresholdIndex;
     Feature optimalThreshold;
     for(size_t j = 0; j < numberOfFeaturesToBeAssessed; ++j) {
@@ -543,7 +543,7 @@ DecisionNode<FEATURE, LABEL>::learn(
             if(sumOfginiCoefficients < optimalSumOfGiniCoefficients) {
                 optimalSumOfGiniCoefficients = sumOfginiCoefficients;
                 optimalFeatureIndex = fi;
-                optimalThreshold = features(sampleIndices[thresholdIndex], fi); 
+                optimalThreshold = 0.5 * (features(sampleIndices[thresholdIndex - 1], fi) + features(sampleIndices[thresholdIndex], fi));
                 optimalThresholdIndex = thresholdIndex;
                 // std::cout << ", new optimum";
             }
@@ -553,6 +553,21 @@ DecisionNode<FEATURE, LABEL>::learn(
             std::fill(numbersOfLabels[s].begin(), numbersOfLabels[s].end(), 0);
         }
     }
+
+	if (optimalFeatureIndex == (size_t)-1)
+	{
+		//we could not find an appropriate feature to split by
+		//make this node a leaf
+		isLeaf_ = true;
+		label_ = 0;
+		for (size_t i = 1; i < numbersOfLabels[0].size(); ++i)
+		{
+			if (numbersOfLabels[0][i] > numbersOfLabels[0][label_])
+				label_ = i;
+		}
+		return 0;
+	}
+
     threshold_ = optimalThreshold;
     featureIndex_ = optimalFeatureIndex;
 
